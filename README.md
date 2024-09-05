@@ -45,18 +45,20 @@ def search_similar_paragraphs(query, model, index, paragraphs, top_k=5):
 
 # Основной код
 def main(directory, query, top_k=5):
-    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')  # Загружаем модель
+    # Шаг 1: Загрузка локальной модели ruRoberta-large
+    model_path = "path_to/ruRoberta-large"  # Замените на фактический путь к модели
+    model = SentenceTransformer(model_path)  # Загрузка модели с локального диска
     
-    # Шаг 1: Чтение абзацев из документов
+    # Шаг 2: Чтение абзацев из документов
     paragraphs, filenames = read_docx_files(directory)
     
-    # Шаг 2: Создание эмбеддингов для абзацев
+    # Шаг 3: Создание эмбеддингов для абзацев
     embeddings = embed_paragraphs(paragraphs, model)
     
-    # Шаг 3: Индексация эмбеддингов с помощью FAISS
+    # Шаг 4: Индексация эмбеддингов с помощью FAISS
     index = create_faiss_index(embeddings)
     
-    # Шаг 4: Поиск по запросу
+    # Шаг 5: Поиск по запросу
     similar_paragraphs = search_similar_paragraphs(query, model, index, paragraphs, top_k)
     
     # Вывод результатов
@@ -65,8 +67,8 @@ def main(directory, query, top_k=5):
         print(f"Результат {i+1}:")
         print(paragraph)
         print()
-        
+
 # Пример использования
-directory = "path_to_your_docx_files"
-query = "Введите ваш поисковый запрос"
+directory = "path_to_your_docx_files"  # Замените на путь к папке с документами
+query = "Введите ваш поисковый запрос"  # Замените на нужный поисковый запрос
 main(directory, query)
