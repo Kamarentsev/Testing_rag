@@ -1,74 +1,65 @@
 import os
-import docx
-from sentence_transformers import SentenceTransformer
-import faiss
+import re
 import numpy as np
+from docx import Document
+from transformers import RobertaTokenizer, RobertaModel
+import torch
+import faiss
 
-# 1. Функция для чтения абзацев из файлов .docx
-def read_docx_files(directory):
-    paragraphs = []
-    filenames = []
-    
+# Загрузка модели и токенизатора
+tokenizer = RobertaTokenizer.from_pretrained('DeepPavlov/roberta-large')
+model = RobertaModel.from_pretrained('DeepPavlov/roberta-large')
+
+def encode_text(text):
+    inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True)
+    with torch.no_grad():
+        outputs = model(**inputs)
+    return outputs.last_hidden_state.mean(dim=1).numpy()
+
+def clean_text(text):
+    # Удаление ненужных шаблонов и слов
+    text = re.sub(r"шаблонные слова и предложения", "", text)
+    return text
+
+def extract_text_from_docs(directory):
+    documents = []
     for filename in os.listdir(directory):
         if filename.endswith(".docx"):
             doc_path = os.path.join(directory, filename)
-            doc = docx.Document(doc_path)
-            for para in doc.paragraphs:
-                text = para.text.strip()
-                if text:  # добавляем только непустые абзацы
-                    paragraphs.append(text)
-                    filenames.append(filename)
-                    
-    return paragraphs, filenames
+            doc = Document(doc_path)
+            doc_text = [para.text for para in doc.paragraphs]
+            documents.append((filename, doc_text))
+    return documents
 
-# 2. Функция для создания эмбеддингов
-def embed_paragraphs(paragraphs, model):
-    return model.encode(paragraphs)
-
-# 3. Функция для создания и индексации с FAISS
-def create_faiss_index(embeddings):
-    d = embeddings.shape[1]  # размерность эмбеддингов
-    index = faiss.IndexFlatL2(d)  # создаем индекс для поиска
-    index.add(embeddings)  # добавляем все эмбеддинги
-    return index
-
-# 4. Функция для поиска по запросу
-def search_similar_paragraphs(query, model, index, paragraphs, top_k=5):
-    query_embedding = model.encode([query])
-    distances, indices = index.search(query_embedding, top_k)
+def index_texts(documents):
+    all_texts = []
+    for doc_name, paragraphs in documents:
+        for i, para in enumerate(paragraphs):
+            cleaned_text = clean_text(para)
+            all_texts.append((doc_name, i, cleaned_text))
     
-    results = []
-    for idx in indices[0]:
-        results.append(paragraphs[idx])
-    
+    vectors = [encode_text(text) for _, _, text in all_texts]
+    dimension = vectors[0].shape[1]
+    index = faiss.IndexFlatL2(dimension)
+    index.add(np.vstack(vectors))
+    return index, all_texts
+
+def search(index, query, all_texts):
+    query_vector = encode_text(query)
+    D, I = index.search(query_vector, k=5)  # Найти 5 ближайших
+    results = [all_texts[i] for i in I[0]]
     return results
 
-# Основной код
-def main(directory, query, top_k=5):
-    # Шаг 1: Загрузка локальной модели ruRoberta-large
-    model_path = "path_to/ruRoberta-large"  # Замените на фактический путь к модели
-    model = SentenceTransformer(model_path)  # Загрузка модели с локального диска
-    
-    # Шаг 2: Чтение абзацев из документов
-    paragraphs, filenames = read_docx_files(directory)
-    
-    # Шаг 3: Создание эмбеддингов для абзацев
-    embeddings = embed_paragraphs(paragraphs, model)
-    
-    # Шаг 4: Индексация эмбеддингов с помощью FAISS
-    index = create_faiss_index(embeddings)
-    
-    # Шаг 5: Поиск по запросу
-    similar_paragraphs = search_similar_paragraphs(query, model, index, paragraphs, top_k)
-    
-    # Вывод результатов
-    print("Результаты поиска:")
-    for i, paragraph in enumerate(similar_paragraphs):
-        print(f"Результат {i+1}:")
-        print(paragraph)
-        print()
+# Основная часть кода
+if __name__ == "__main__":
+    directory = 'path_to_word_docs'  # Укажите путь к папке с документами
+    documents = extract_text_from_docs(directory)
+    index, all_texts = index_texts(documents)
 
-# Пример использования
-directory = "path_to_your_docx_files"  # Замените на путь к папке с документами
-query = "Введите ваш поисковый запрос"  # Замените на нужный поисковый запрос
-main(directory, query)
+    query = input("Введите текст запроса: ")
+    results = search(index, query, all_texts)
+
+    for doc_name, para_num, result in results:
+        print(f"Документ: {doc_name}, Абзац: {para_num + 1}")
+        print(result)
+        print()
