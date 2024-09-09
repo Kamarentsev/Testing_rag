@@ -63,3 +63,53 @@ if __name__ == "__main__":
         print(f"Документ: {doc_name}, Абзац: {para_num + 1}")
         print(result)
         print()
+
+
+------------------
+
+from spellchecker import SpellChecker
+import pymorphy2
+
+# Инициализируем проверку орфографии
+spell = SpellChecker(language='ru')
+morph = pymorphy2.MorphAnalyzer()
+
+def check_spelling(text):
+    words = text.split()
+    misspelled = spell.unknown(words)  # Поиск орфографических ошибок
+
+    if not misspelled:
+        print("Орфографических ошибок не найдено.")
+    else:
+        print("Найдены орфографические ошибки:")
+        for word in misspelled:
+            print(f"{word} -> {spell.correction(word)}")
+
+def check_grammar(text):
+    words = text.split()
+    corrected_text = []
+
+    for word in words:
+        parsed_word = morph.parse(word)[0]
+        normal_form = parsed_word.normal_form  # Получаем нормальную форму слова
+        
+        # Здесь можно добавить дополнительные проверки на согласование слов,
+        # но это требует более сложных алгоритмов.
+
+        corrected_text.append(normal_form)
+
+    return " ".join(corrected_text)
+
+def main():
+    input_text = input("Введите текст для проверки: ")
+    
+    # Проверка орфографии
+    check_spelling(input_text)
+    
+    # Проверка и исправление грамматики
+    corrected_text = check_grammar(input_text)
+    print(f"Исправленный текст: {corrected_text}")
+
+if __name__ == "__main__":
+    main()
+
