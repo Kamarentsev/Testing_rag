@@ -1,33 +1,29 @@
-import streamlit as st
-import streamlit_authenticator as stauth
+import spacy
 
-# Определяем пользователей и их пароли
-names = ['Иван Иванов', 'Петр Петров']
-usernames = ['ivan', 'petr']
-passwords = ['password1', 'password2']
+# Загружаем модель для русского языка
+nlp = spacy.load("ru_core_news_sm")
 
-# Создание хэшей паролей (вызывается один раз)
-hashed_passwords = stauth.Hasher(passwords).generate()
-
-# Настройка аутентификации
-authenticator = stauth.Authenticate(
-    names, usernames, hashed_passwords,
-    'some_cookie_name', 'some_signature_key'
-)
-
-# Создаем форму для аутентификации
-name, authentication_status, username = authenticator.login('Login', 'main')
-
-if authentication_status:
-    st.success(f'Добро пожаловать {name}!')
-    # Основная страница приложения
-    st.write('Основное содержимое вашего приложения...')
+def replace_entities(text):
+    # Пропускаем текст через NLP-модель
+    doc = nlp(text)
     
-elif authentication_status == False:
-    st.error('Неверное имя пользователя или пароль')
+    # Создаем копию текста
+    new_text = text
     
-elif authentication_status == None:
-    st.warning('Пожалуйста, введите ваши учетные данные')
+    # Заменяем сущности в тексте
+    for ent in doc.ents:
+        if ent.label_ == "ORG":  # Организации
+            new_text = new_text.replace(ent.text, "[компания]")
+        elif ent.label_ == "DATE":  # Даты
+            new_text = new_text.replace(ent.text, "[дата]")
+        elif ent.label_ == "MONEY":  # Суммы
+            new_text = new_text.replace(ent.text, "[сумма]")
+    
+    return new_text
 
-# Добавляем возможность выхода из аккаунта
-authenticator.logout('Logout', 'sidebar')
+# Пример текста
+text = "Компания ООО Ромашка заключила договор с ООО Василек 12 января 2023 года на сумму 500000 рублей."
+
+# Преобразуем текст
+new_text = replace_entities(text)
+print(new_text)
