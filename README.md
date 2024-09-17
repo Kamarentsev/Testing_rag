@@ -1,39 +1,31 @@
-import re
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
-def replace_entities(text):
-    # Регулярные выражения для фамилий с инициалами (например, "Лебедев И.Н." и "Лебедев И. Н.")
-    # Фамилии с инициалами (с точками и пробелами между инициалами)
-    name_pattern = r'\b[А-ЯЁ][а-яё]+(?: [А-ЯЁ]\.[А-ЯЁ]\.| [А-ЯЁ] [А-ЯЁ])?\b'
+# Загрузка модели и токенизатора
+model_name = "sberbank-ai/rugpt3medium_based_on_gpt2"
+model = GPT2LMHeadModel.from_pretrained(model_name)
+tokenizer = GPT2Tokenizer.from_pretrained(model_name)
 
-    # Регулярные выражения для дат
-    date_pattern1 = r'\b\d{1,2}\.\d{1,2}\.\d{4}\b'  # Формат дд.мм.гггг
-    date_pattern2 = r'\b\d{1,2} (января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря) \d{4} года?\b'
+def expand_text(input_text, max_length=300, temperature=0.9):
+    # Токенизация входного текста
+    inputs = tokenizer.encode(input_text, return_tensors='pt')
 
-    # Регулярные выражения для сумм
-    sum_pattern = r'\b\d+[\s]?(руб(лей)?|USD|EUR|долларов|евро)\b'
+    # Генерация текста
+    outputs = model.generate(
+        inputs,
+        max_length=max_length,
+        do_sample=True,  # Используем сэмплинг для более креативного текста
+        temperature=temperature,  # Настройка креативности
+        top_p=0.95,  # Выбираем "умные" токены
+        num_return_sequences=1  # Генерируем только 1 вариант
+    )
 
-    # ФИО с полным именем и отчеством
-    full_name_pattern = r'\b[А-ЯЁ][а-яё]+ [А-ЯЁ][а-яё]+ [А-ЯЁ][а-яё]+\b'
+    # Декодирование сгенерированного текста
+    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return generated_text
 
-    # Заменяем фамилии с инициалами и полные ФИО
-    text = re.sub(name_pattern, '[сотрудник]', text)
-    text = re.sub(full_name_pattern, '[сотрудник]', text)
+# Пример использования
+input_paragraph = "В начале осени дни становятся короче, а ночи длиннее. Листья на деревьях начинают менять цвет, становясь ярко-желтыми и красными."
+expanded_text = expand_text(input_paragraph)
 
-    # Заменяем даты
-    text = re.sub(date_pattern1, '[дата]', text)
-    text = re.sub(date_pattern2, '[дата]', text)
-
-    # Заменяем суммы
-    text = re.sub(sum_pattern, '[сумма]', text)
-
-    return text
-
-# Пример текста
-text = """
-Начальнику отдела маркетинга Лебедеву И.Н. и Лебедеву И. Н. необходимо подготовить отчет до 30 сентября 2023 года на сумму 120000 рублей.
-Сотрудник Иванов Иван Иванович подписал контракт с компанией ООО Ромашка.
-"""
-
-# Преобразуем текст
-new_text = replace_entities(text)
-print(new_text)
+print("Исходный текст:", input_paragraph)
+print("Расширенный текст:", expanded_text)
