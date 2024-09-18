@@ -1,21 +1,19 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import T5ForConditionalGeneration, T5Tokenizer
 
-# Загружаем модель и токенизатор
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf")
-model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b-hf")
+# Загрузка модели и токенизатора
+tokenizer = T5Tokenizer.from_pretrained('T5')
+model = T5ForConditionalGeneration.from_pretrained('T5')
 
-# Пример текста, который нужно дополнить
-text = "Москва — столица России. В городе много музеев. Архитектура Москвы сочетает старинные и современные здания."
+# Ввод текста
+input_text = "расширь это предложение: Технологии развиваются."
 
-# Подготовка подсказки для модели
-prompt = f"Расширь этот текст, добавив больше деталей в каждое предложение: {text}"
+# Препроцессинг текста для модели
+input_ids = tokenizer.encode(input_text, return_tensors='pt')
 
-# Токенизация текста
-input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+# Генерация текста
+outputs = model.generate(input_ids, max_length=50, num_beams=5, early_stopping=True)
 
-# Генерация ответа модели
-outputs = model.generate(input_ids, max_length=500, do_sample=True)
+# Декодирование выходного текста
+output_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-# Декодирование и вывод текста
-generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-print(generated_text)
+print(output_text)
