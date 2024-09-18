@@ -1,27 +1,39 @@
+import re
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
-# Загрузка модели и токенизатора
+# Загрузка модели и токенизатора GPT-2
 tokenizer = GPT2Tokenizer.from_pretrained('rugpt2large')
 model = GPT2LMHeadModel.from_pretrained('rugpt2large')
 
-# Ввод текста
-input_text = "Технологии развиваются"
+# Функция для разбивки текста на предложения
+def split_into_sentences(text):
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    return sentences
 
-# Токенизация текста
-input_ids = tokenizer.encode(input_text, return_tensors='pt')
+# Функция для дополнения каждого предложения с помощью GPT-2
+def expand_sentence(sentence, model, tokenizer):
+    input_ids = tokenizer.encode(sentence, return_tensors='pt')
+    outputs = model.generate(
+        input_ids,
+        max_length=50,  # Длина дополнения
+        num_beams=5,    # Количество лучей для генерации
+        temperature=0.7,
+        top_p=0.9,
+        no_repeat_ngram_size=3,
+        do_sample=True
+    )
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-# Генерация текста с параметрами, предотвращающими повторения
-outputs = model.generate(
-    input_ids,
-    max_length=100,           # Увеличиваем максимальную длину
-    num_beams=5,              # Используем несколько лучей для генерации
-    temperature=0.7,          # Контроль над случайностью, ниже для более точного текста
-    top_p=0.9,                # Nucleus sampling для разнообразия
-    no_repeat_ngram_size=3,   # Предотвращаем повторения n-грамм (например, триграммы)
-    do_sample=True            # Включаем выборку токенов для большей креативности
-)
+# Вводный текст (абзац)
+paragraph = "Технологии развиваются. Мы живем в удивительное время. Искусственный интеллект уже меняет нашу жизнь."
 
-# Декодирование текста
-generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+# Разбиваем абзац на предложения
+sentences = split_into_sentences(paragraph)
 
-print(generated_text)
+# Дополняем каждое предложение
+expanded_sentences = [expand_sentence(sentence, model, tokenizer) for sentence in sentences]
+
+# Соединяем предложения обратно в абзац
+expanded_paragraph = ' '.join(expanded_sentences)
+
+print(expanded_paragraph)
