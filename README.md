@@ -1,60 +1,42 @@
-import re
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+import spacy
+from spellchecker import SpellChecker
+from transformers import pipeline
 
-# Загрузка модели и токенизатора GPT-2
-tokenizer = GPT2Tokenizer.from_pretrained('rugpt2large')
-model = GPT2LMHeadModel.from_pretrained('rugpt2large')
+# Загрузка NLP модели из spacy (предположим, на русском языке)
+nlp = spacy.load("ru_core_news_sm")
 
-# Функция для разбивки текста на предложения
-def split_into_sentences(text):
-    sentences = re.split(r'(?<=[.!?])\s+', text)
-    return sentences
+# Инициализация проверки орфографии
+spell = SpellChecker(language='ru')
 
-# Фильтрация диалогов и разговорных конструкций
-def is_dialogue(text):
-    # Поиск конструкций с тире, кавычками или словами, характерными для диалогов
-    dialogue_keywords = ["сказал", "спросил", "ответил", "прошептал", "воскликнул"]
+# Функция для проверки орфографии
+def correct_spelling(text):
+    words = text.split()
+    corrected_text = []
+    for word in words:
+        corrected_word = spell.correction(word)
+        corrected_text.append(corrected_word)
+    return ' '.join(corrected_text)
+
+# Использование модели для грамматических и лексических ошибок
+def correct_text(text):
+    # Применение орфографической коррекции
+    text = correct_spelling(text)
     
-    if re.search(r'["“”]', text):  # Проверяем наличие кавычек
-        return True
-    if text.startswith("–"):  # Проверяем наличие тире в начале строки
-        return True
-    if any(keyword in text.lower() for keyword in dialogue_keywords):  # Проверяем ключевые слова
-        return True
-    return False
-
-# Функция для дополнения каждого предложения с помощью GPT-2, исключая диалоги
-def expand_sentence(sentence, model, tokenizer):
-    input_ids = tokenizer.encode(sentence, return_tensors='pt')
-    outputs = model.generate(
-        input_ids,
-        max_length=50,  # Длина дополнения
-        num_beams=5,    # Количество лучей для генерации
-        temperature=0.5,  # Более низкая температура для формального текста
-        top_p=0.8,        # Ограничение для разнообразия
-        no_repeat_ngram_size=3,
-        do_sample=True
-    )
+    # Применение модели spacy для лексического и грамматического анализа
+    doc = nlp(text)
+    corrected_tokens = []
     
-    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    for token in doc:
+        # Для примера заменяем только некоторые ошибки
+        if token.pos_ == 'VERB' and token.tag_ != 'VERB_CORRECT_FORM':
+            corrected_tokens.append(token.lemma_)  # Ставим глаголы в правильную форму
+        else:
+            corrected_tokens.append(token.text)
     
-    # Фильтрация текста на наличие диалогов или разговорных конструкций
-    if is_dialogue(generated_text):
-        # Если обнаружены диалоги, возвращаем оригинальное предложение
-        return sentence
-    else:
-        return generated_text
+    corrected_text = ' '.join(corrected_tokens)
+    return corrected_text
 
-# Вводный текст (абзац)
-paragraph = "Технологии развиваются. Мы живем в удивительное время. Искусственный интеллект уже меняет нашу жизнь."
-
-# Разбиваем абзац на предложения
-sentences = split_into_sentences(paragraph)
-
-# Дополняем каждое предложение, избегая диалогов и разговорных конструкций
-expanded_sentences = [expand_sentence(sentence, model, tokenizer) for sentence in sentences]
-
-# Соединяем предложения обратно в абзац
-expanded_paragraph = ' '.join(expanded_sentences)
-
-print(expanded_paragraph)
+# Тест программы
+input_text = "Я хачу сделат програму котороя правет ошипки в тексте"
+corrected_text = correct_text(input_text)
+print("Исправленный текст:", corrected_text)
