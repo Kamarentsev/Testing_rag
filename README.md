@@ -11,3 +11,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     # Получение ответа от сервера
     data = s.recv(1024)
     print(f"Получено от сервера: {data.decode()}")
+
+
+@echo off
+cd C:\path\to\your\script
+python server_script.py
+pause
