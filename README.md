@@ -47,6 +47,8 @@ app.layout = html.Div(id="page-content", children=[login_page])
 def authenticate(username, password):
     server = Server(LDAP_SERVER, get_info=ALL)
     try:
+        print(f"Попытка подключения к серверу: {LDAP_SERVER}")
+        print(f"Проверяем логин: {username}")
         conn = Connection(server, user=username, password=password, authentication=NTLM)
         if conn.bind():
             print("Аутентификация прошла успешно.")
@@ -69,14 +71,17 @@ def authenticate(username, password):
 )
 def authenticate_user(n_clicks, username, password):
     # Проверяем логин на наличие в списке разрешённых
-    if username in allowUsers:
-        # Если логин разрешён, проверяем пароль через системную аутентификацию
-        if authenticate(username, password):
-            return main_page, ""
-        else:
-            return login_page, "Неверный пароль или логин"
-    else:
+    print(f"Полученные данные: логин - {username}, пароль - {'*' * len(password)}")
+
+    # Проверяем, что логин имеет правильный формат и есть в списке разрешенных
+    if username not in allowUsers:
         return login_page, "Логин не найден в списке разрешённых пользователей"
+
+    # Если логин разрешён, проверяем пароль через системную аутентификацию
+    if authenticate(username, password):
+        return main_page, ""
+    else:
+        return login_page, "Неверный пароль"
 
 # Запуск приложения
 if __name__ == '__main__':
