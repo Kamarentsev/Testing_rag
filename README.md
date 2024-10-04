@@ -1,13 +1,13 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output, State
-import getpass
+from ldap3 import Server, Connection, ALL, NTLM
 
 # Инициализация приложения
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-# Логины, которые разрешены
-VALID_LOGINS = ['admin', 'user1', 'user2']
+# Список разрешённых логинов
+allowUsers = ['VTB70217696', 'VTB70204926', 'VTB7027110', 'VTB70250595', 'VTB70250965']
 
 # Интерфейс для страницы аутентификации
 login_page = dbc.Container([
@@ -24,7 +24,7 @@ login_page = dbc.Container([
     )
 ], fluid=True, style={"backgroundColor": "#6699FF", "padding": "100px"})
 
-# Основная страница после входа
+# Главная страница после успешной аутентификации
 main_page = html.Div([
     dbc.NavbarSimple(
         brand="ВТБ Панель",
@@ -38,8 +38,21 @@ main_page = html.Div([
     ], fluid=True, style={"backgroundColor": "#6699FF", "padding": "20px"})
 ])
 
-# Описание интерфейса (layout) — начнем со страницы аутентификации
+# Описание интерфейса
 app.layout = html.Div(id="page-content", children=[login_page])
+
+# Функция аутентификации через LDAP
+def authenticate(username, password):
+    server = Server('ldap://your-ldap-server', get_info=ALL)  # Замените на ваш LDAP сервер
+    try:
+        conn = Connection(server, user=f'REGION\\{username}', password=password, authentication=NTLM)
+        if conn.bind():
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Ошибка аутентификации: {str(e)}")
+        return False
 
 # Логика аутентификации
 @app.callback(
@@ -51,19 +64,17 @@ app.layout = html.Div(id="page-content", children=[login_page])
     prevent_initial_call=True
 )
 def authenticate_user(n_clicks, username, password):
-    # Проверка логина
-    if username in VALID_LOGINS:
-        try:
-            # Имитация проверки системного пароля с помощью getpass (для локальной проверки)
-            if password == getpass.getpass(f"Введите системный пароль для пользователя {username}: "):
-                return main_page, ""
-            else:
-                return login_page, "Неверный системный пароль"
-        except Exception as e:
-            return login_page, str(e)
+    # Проверяем логин пользователя
+    if username in allowUsers:
+        # Если логин разрешен, проверяем пароль через LDAP
+        if authenticate(username, password):
+            return main_page, ""
+        else:
+            return login_page, "Неверный пароль"
     else:
         return login_page, "Неверный логин"
 
 # Запуск приложения
 if __name__ == '__main__':
     app.run_server(debug=True)
+
