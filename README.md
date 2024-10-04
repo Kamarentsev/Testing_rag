@@ -13,7 +13,7 @@ LDAP_COOKIE = os.getenv('AUTH_COOKIE', 'your-default-cookie')  # Куки для
 SESSION_STATE_NAMES = os.getenv('SESSION_STATE_NAMES', 'default-session')  # Состояние сессии
 
 # Список разрешённых логинов (как в твоём примере)
-allowUsers = ['VTB70217696', 'VTB70204926', 'VTB7027110', 'VTB70250595', 'VTB70250965']
+allowUsers = ['VTB70217696@REGION.VTB.RU', 'VTB70204926@REGION.VTB.RU', 'VTB7027110@REGION.VTB.RU', 'VTB70250595@REGION.VTB.RU', 'VTB70250965@REGION.VTB.RU']
 
 # Интерфейс страницы аутентификации
 login_page = dbc.Container([
@@ -22,7 +22,7 @@ login_page = dbc.Container([
     ),
     dbc.Row(
         dbc.Col([
-            dbc.Input(id="username", placeholder="Введите логин", type="text", className="mb-3"),
+            dbc.Input(id="username", placeholder="Введите логин в формате 'логин@REGION.VTB.RU'", type="text", className="mb-3"),
             dbc.Input(id="password", placeholder="Введите пароль", type="password", className="mb-3"),
             dbc.Button("Войти", id="login-button", color="primary", className="w-100"),
             html.Div(id="login-output", className="mt-3", style={"color": "red"})
@@ -49,10 +49,10 @@ app.layout = html.Div(id="page-content", children=[login_page])
 
 # Функция для аутентификации через LDAP
 def authenticate(username, password):
-    server = Server(LDAP_SERVER, get_info=ALL)  # Подключаемся к LDAP-серверу (по умолчанию системный)
+    server = Server(LDAP_SERVER, get_info=ALL)  # Подключаемся к LDAP-серверу
     try:
-        # Проверяем введённые данные с помощью NTLM аутентификации (как в твоём примере)
-        conn = Connection(server, user=f'REGION\\{username}', password=password, authentication=NTLM)
+        # Используем полный логин с доменом
+        conn = Connection(server, user=username, password=password, authentication=NTLM)
         if conn.bind():
             return True
         else:
