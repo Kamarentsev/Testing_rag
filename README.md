@@ -6,10 +6,10 @@ from ldap3 import Server, Connection, ALL, NTLM
 # Инициализация приложения
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-# Список разрешённых логинов
+# Список разрешённых логинов (без доменов)
 allowUsers = ['VTB70217696', 'VTB70204926', 'VTB7027110', 'VTB70250595', 'VTB70250965']
 
-# Интерфейс для страницы аутентификации
+# Интерфейс страницы аутентификации
 login_page = dbc.Container([
     dbc.Row(
         dbc.Col(html.H2("Вход в систему ВТБ", style={"color": "#003399"}), width=12, className="text-center")
@@ -41,10 +41,11 @@ main_page = html.Div([
 # Описание интерфейса
 app.layout = html.Div(id="page-content", children=[login_page])
 
-# Функция аутентификации через LDAP
+# Функция для аутентификации через LDAP
 def authenticate(username, password):
     server = Server('ldap://your-ldap-server', get_info=ALL)  # Замените на ваш LDAP сервер
     try:
+        # Используем введённый логин в формате для проверки в домене
         conn = Connection(server, user=f'REGION\\{username}', password=password, authentication=NTLM)
         if conn.bind():
             return True
@@ -64,17 +65,16 @@ def authenticate(username, password):
     prevent_initial_call=True
 )
 def authenticate_user(n_clicks, username, password):
-    # Проверяем логин пользователя
+    # Проверка, есть ли введённый логин в списке разрешённых пользователей
     if username in allowUsers:
-        # Если логин разрешен, проверяем пароль через LDAP
+        # Если логин разрешён, проверяем пароль через LDAP
         if authenticate(username, password):
             return main_page, ""
         else:
             return login_page, "Неверный пароль"
     else:
-        return login_page, "Неверный логин"
+        return login_page, "Логин не найден в списке разрешённых пользователей"
 
 # Запуск приложения
 if __name__ == '__main__':
     app.run_server(debug=True)
-
