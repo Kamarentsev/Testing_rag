@@ -1,18 +1,14 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output, State
-import os  # Для работы с системными переменными окружения
-from ldap3 import Server, Connection, ALL, NTLM  # LDAP для проверки
+import os
+from ldap3 import Server, Connection, ALL, NTLM
 
 # Инициализация приложения
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-# Имитируем работу с секретами из переменных окружения (аналог st.secrets)
-LDAP_SERVER = os.getenv('LDAP_SERVER', 'ldap://your-default-server')  # Переменная окружения для LDAP-сервера
-LDAP_COOKIE = os.getenv('AUTH_COOKIE', 'your-default-cookie')  # Куки для авторизации
-SESSION_STATE_NAMES = os.getenv('SESSION_STATE_NAMES', 'default-session')  # Состояние сессии
-
-# Список разрешённых логинов (как в твоём примере)
+# Имитируем работу с секретами из переменных окружения
+LDAP_SERVER = os.getenv('LDAP_SERVER', 'ldap://your-default-server')  # Замените на ваш сервер LDAP
 allowUsers = ['VTB70217696@REGION.VTB.RU', 'VTB70204926@REGION.VTB.RU', 'VTB7027110@REGION.VTB.RU', 'VTB70250595@REGION.VTB.RU', 'VTB70250965@REGION.VTB.RU']
 
 # Интерфейс страницы аутентификации
@@ -49,13 +45,14 @@ app.layout = html.Div(id="page-content", children=[login_page])
 
 # Функция для аутентификации через LDAP
 def authenticate(username, password):
-    server = Server(LDAP_SERVER, get_info=ALL)  # Подключаемся к LDAP-серверу
+    server = Server(LDAP_SERVER, get_info=ALL)
     try:
-        # Используем полный логин с доменом
         conn = Connection(server, user=username, password=password, authentication=NTLM)
         if conn.bind():
+            print("Аутентификация прошла успешно.")
             return True
         else:
+            print("Ошибка аутентификации: неверный пароль или логин.")
             return False
     except Exception as e:
         print(f"Ошибка аутентификации: {str(e)}")
@@ -77,7 +74,7 @@ def authenticate_user(n_clicks, username, password):
         if authenticate(username, password):
             return main_page, ""
         else:
-            return login_page, "Неверный пароль"
+            return login_page, "Неверный пароль или логин"
     else:
         return login_page, "Логин не найден в списке разрешённых пользователей"
 
