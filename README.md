@@ -6,17 +6,17 @@ model_name = "ai-forever/rugpt2large"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(model_name)
 
-def generate_formal_text(prompt, max_length=150, temperature=0.3, top_p=0.8, top_k=50):
-    # Шаблон официального текста
-    formal_prompt = (f"Уважаемая служба поддержки,\n\n"
-                     f"Сообщаю о возникшем инциденте, связанном с {prompt}. "
-                     f"Данный сбой нарушил работу системы безопасности, что привело к потенциальным рискам для клиентов.\n\n"
-                     f"Прошу принять незамедлительные меры по устранению проблемы и предоставлению отчета о произошедшем. "
-                     f"Пожалуйста, свяжитесь со мной по контактным данным для дальнейшего разъяснения ситуации.\n\n"
-                     f"С уважением,\nКлиент")
+def generate_banking_text(prompt, max_length=150, temperature=0.3, top_p=0.8, top_k=50):
+    # Универсальный шаблон для различных банковских запросов
+    template = (f"Уважаемый отдел поддержки,\n\n"
+                f"Сообщаю о возникшей проблеме, связанной с {prompt}. "
+                f"Эта ситуация вызвала затруднения в использовании услуг банка и может негативно сказаться на "
+                f"доверии клиентов. Прошу оперативно принять меры для разрешения данной проблемы и предоставить разъяснения по поводу возникшей ситуации.\n\n"
+                f"Прошу также рассмотреть возможность возмещения возможных убытков, связанных с данным инцидентом.\n\n"
+                f"С уважением,\nКлиент банка")
 
     # Токенизация
-    input_ids = tokenizer.encode(formal_prompt, return_tensors="pt")
+    input_ids = tokenizer.encode(template, return_tensors="pt")
     
     # Генерация текста
     with torch.no_grad():
@@ -27,7 +27,7 @@ def generate_formal_text(prompt, max_length=150, temperature=0.3, top_p=0.8, top
             top_p=top_p,
             top_k=top_k,
             pad_token_id=tokenizer.eos_token_id,
-            do_sample=False,  # Избегаем случайного ответа для сдержанного тона
+            do_sample=False,
             repetition_penalty=1.3
         )
     
@@ -36,6 +36,6 @@ def generate_formal_text(prompt, max_length=150, temperature=0.3, top_p=0.8, top
     return generated_text
 
 # Пример использования функции
-prompt = "сбоем в системе безопасности"
-generated_text = generate_formal_text(prompt)
+prompt = "неполадками в системе безопасности"
+generated_text = generate_banking_text(prompt)
 print(generated_text)
