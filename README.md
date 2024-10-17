@@ -1,44 +1,68 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Generation</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-</head>
-<body>
-    <!-- Логотип и заголовок -->
-    <header>
-        <a href="https://www.vtb.ru" target="_blank">
-            <img src="{{ url_for('static', filename='vtb-logo.png') }}" alt="VTB Logo" class="logo">
-        </a>
-        <h1>Введите запрос для генерации</h1>
-    </header>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
 
-    <!-- Форма для ввода запроса -->
-    <form action="/process" method="post">
-        <textarea name="user_input" placeholder="Введите текст здесь..." rows="5" required></textarea>
-        <button type="submit">Сгенерировать текст</button>
-    </form>
+header {
+    background-color: #00458a;
+    padding: 1rem;
+    color: #fff;
+}
 
-    <!-- Результаты генерации -->
-    {% if result %}
-    <section class="results">
-        <h2>Результаты генерации</h2>
-        <div class="iteration">
-            <h3>Итерация №1:</h3>
-            <p>{{ result['iter_1'] }}</p>
-        </div>
-        <div class="iteration">
-            <h3>Итерация №2:</h3>
-            <p>{{ result['iter_2'] }}</p>
-        </div>
-        <div class="iteration">
-            <h3>Итерация №3:</h3>
-            <p>{{ result['iter_3'] }}</p>
-        </div>
-    </section>
-    {% endif %}
-</body>
-</html>
+.logo {
+    height: 50px;
+}
+
+h1 {
+    font-size: 2rem;
+    margin: 0.5rem 0;
+}
+
+form {
+    margin-top: 20px;
+}
+
+textarea {
+    width: 80%;
+    height: 100px;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+button {
+    background-color: #00458a;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #003366;
+}
+
+.results {
+    margin-top: 30px;
+}
+
+.iteration h3 {
+    color: #00458a;
+}
+
+.iteration p {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    max-width: 80%;
+    margin: 10px auto;
+    text-align: left;
+}
