@@ -1,45 +1,44 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Generation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+    <!-- Логотип и заголовок -->
+    <header>
+        <a href="https://www.vtb.ru" target="_blank">
+            <img src="{{ url_for('static', filename='vtb-logo.png') }}" alt="VTB Logo" class="logo">
+        </a>
+        <h1>Введите запрос для генерации</h1>
+    </header>
 
-h1 {
-    color: #333;
-}
+    <!-- Форма для ввода запроса -->
+    <form action="/process" method="post">
+        <textarea name="user_input" placeholder="Введите текст здесь..." rows="5" required></textarea>
+        <button type="submit">Сгенерировать текст</button>
+    </form>
 
-form {
-    margin-top: 20px;
-    width: 100%;
-    max-width: 600px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-input[type="submit"] {
-    background-color: #1a73e8;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-input[type="submit"]:hover {
-    background-color: #1558b8;
-}
+    <!-- Результаты генерации -->
+    {% if result %}
+    <section class="results">
+        <h2>Результаты генерации</h2>
+        <div class="iteration">
+            <h3>Итерация №1:</h3>
+            <p>{{ result['iter_1'] }}</p>
+        </div>
+        <div class="iteration">
+            <h3>Итерация №2:</h3>
+            <p>{{ result['iter_2'] }}</p>
+        </div>
+        <div class="iteration">
+            <h3>Итерация №3:</h3>
+            <p>{{ result['iter_3'] }}</p>
+        </div>
+    </section>
+    {% endif %}
+</body>
+</html>
