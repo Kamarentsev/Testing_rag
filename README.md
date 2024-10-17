@@ -1,21 +1,45 @@
-@app.route('/process', methods=['POST'])
-def process():
-    user_input = request.form['user_input']
-    
-    # Отправляем запрос на сервер обработки
-    response = requests.post("http://10.235.78.137:8505/process", json={'input': user_input})
-    
-    # Проверяем, что вернул сервер
-    try:
-        response_data = response.json()
-        print("Response Data:", response_data)  # Для отладки, чтобы увидеть ответ
-        
-        # Получаем пять результатов из ответа
-        results = response_data.get('results', None)
-        if not results:
-            results = {"error": "Ошибка при обработке запроса"}
-    except ValueError:
-        # Если ответ не JSON, устанавливаем сообщение об ошибке
-        results = {"error": "Ошибка при обработке запроса - неверный формат ответа"}
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
 
-    return render_template('index.html', results=results)
+h1 {
+    color: #333;
+}
+
+form {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+input[type="submit"] {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+input[type="submit"]:hover {
+    background-color: #1558b8;
+}
