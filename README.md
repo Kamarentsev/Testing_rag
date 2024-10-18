@@ -1,68 +1,21 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-}
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
-header {
-    background-color: #00458a;
-    padding: 1rem;
-    color: #fff;
-}
+# Загружаем модель и токенайзер
+model_name = "sberbank-ai/rugpt3medium_based_on_gpt2"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name)
 
-.logo {
-    height: 50px;
-}
+def generate_text(prompt, max_length=100):
+    # Токенизация входного текста
+    inputs = tokenizer.encode(prompt, return_tensors="pt")
+    
+    # Генерация текста
+    outputs = model.generate(inputs, max_length=max_length, num_return_sequences=1, no_repeat_ngram_size=2)
+    
+    # Декодируем и возвращаем результат
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-h1 {
-    font-size: 2rem;
-    margin: 0.5rem 0;
-}
-
-form {
-    margin-top: 20px;
-}
-
-textarea {
-    width: 80%;
-    height: 100px;
-    padding: 10px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-bottom: 10px;
-}
-
-button {
-    background-color: #00458a;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    font-size: 1rem;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #003366;
-}
-
-.results {
-    margin-top: 30px;
-}
-
-.iteration h3 {
-    color: #00458a;
-}
-
-.iteration p {
-    background-color: #fff;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ddd;
-    max-width: 80%;
-    margin: 10px auto;
-    text-align: left;
-}
+# Пример использования:
+user_query = input("Введите запрос: ")
+generated_text = generate_text(user_query)
+print(generated_text)
