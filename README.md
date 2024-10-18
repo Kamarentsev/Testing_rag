@@ -1,32 +1,53 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
+import random
+import nltk
+from nltk import word_tokenize
+from collections import defaultdict
 
-# Загружаем модель и токенайзер
-model_name = "sberbank-ai/rugpt3medium_based_on_gpt2"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name)
+# Загрузите данные для токенизации, если еще не скачаны
+nltk.download('punkt')
 
-def generate_text_with_keywords(keywords, max_length=100):
-    # Объединяем ключевые слова в строку для подачи модели
-    prompt = " ".join(keywords)
-    
-    # Токенизация ключевых слов
-    inputs = tokenizer.encode(prompt, return_tensors="pt")
-    
-    # Генерация текста с более низкой "творческой свободой"
-    outputs = model.generate(
-        inputs, 
-        max_length=max_length, 
-        num_return_sequences=1, 
-        no_repeat_ngram_size=2, 
-        temperature=0.3,  # Уменьшение креативности
-        top_p=0.8,  # Ограничение на менее вероятные продолжения
-        do_sample=True
-    )
-    
-    # Декодируем результат
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+class MarkovChainTextGenerator:
+    def __init__(self, text):
+        self.words = word_tokenize(text.lower(), language='russian')  # Укажите язык как русский
+        self.word_dict = defaultdict(list)
+        self.build_chain()
 
-# Пример использования:
-keywords = ["сбой", "система безопасности", "утечка данных", "последствия", "устранение"]
-generated_text = generate_text_with_keywords(keywords)
-print(generated_text)
+    def build_chain(self):
+        for i in range(len(self.words) - 1):
+            self.word_dict[self.words[i]].append(self.words[i + 1])
+
+    def generate_text(self, input_words, num_sentences=2):
+        input_words = input_words.lower().split()
+        start_word = random.choice(input_words)
+        generated_sentences = []
+
+        for _ in range(num_sentences):
+            current_word = start_word
+            sentence = []
+
+            while current_word not in ['.', '!', '?'] and len(sentence) < 15:  # Ограничение на количество слов
+                sentence.append(current_word)
+                next_words = self.word_dict.get(current_word, [])
+                if not next_words:
+                    break
+                current_word = random.choice(next_words)
+
+            generated_sentences.append(' '.join(sentence).capitalize() + '.')  # Форматирование предложения
+
+        return ' '.join(generated_sentences)
+
+
+# Пример использования
+if __name__ == "__main__":
+    text_corpus = """
+    Сбой в системе безопасности привел к потере данных. 
+    Необходимо провести аудит безопасности. 
+    Данные должны быть восстановлены как можно скорее. 
+    Команда работает над решением проблемы. 
+    Рекомендуется обновить систему безопасности для предотвращения повторных сбоев.
+    """
+    
+    generator = MarkovChainTextGenerator(text_corpus)
+    input_query = "сбой в системе безопасности"
+    generated_text = generator.generate_text(input_query, num_sentences=3)
+    print(generated_text)
